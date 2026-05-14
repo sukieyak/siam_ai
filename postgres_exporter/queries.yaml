@@ -1,0 +1,93 @@
+pg_data_quality_records_per_batch:
+  query: |
+    SELECT
+      s.name AS dataset_name,
+      to_char(date_trunc('day', d.created_at), 'YYYY-MM-DD') AS batch_day,
+      count(*) AS records_cleaned
+    FROM documents d
+    JOIN datasets s ON s.id = d.dataset_id
+    WHERE d.status = 'ingested'
+    GROUP BY s.name, batch_day
+    ORDER BY batch_day, s.name;
+  metrics:
+    - dataset_name:
+        usage: "LABEL"
+        description: "Dataset name"
+    - batch_day:
+        usage: "LABEL"
+        description: "Batch day (YYYY-MM-DD)"
+    - records_cleaned:
+        usage: "GAUGE"
+        description: "Number of records ingested per dataset per day"
+pg_data_quality_records:
+  query: |
+        SELECT
+          s.name,
+          count(*) AS records_cleaned
+        FROM documents d
+        JOIN datasets s on s.id = d.dataset_id
+        WHERE d.status = 'ingested'
+        GROUP BY d.dataset_id, s.name
+        order by d.dataset_id   ASC ;
+  metrics:
+    - name:
+        usage: "LABEL"
+        description: "Dataset name"
+    - records_cleaned:
+        usage: "GAUGE"
+pg_data_quality_null_ratio:
+  query: |
+    SELECT
+      s.dataset_id,
+      d.name,
+      1.0 * SUM(
+            CASE WHEN NULLIF(TRIM(s.language), '') IS NULL THEN 1 ELSE 0 END
+        ) / COUNT(*) AS language_null_ratio,
+      1.0 * SUM(
+            CASE WHEN NULLIF(TRIM(s.content), '') IS NULL THEN 1 ELSE 0 END
+        ) / COUNT(*) AS content_null_ratio,
+      1.0 * SUM(
+            CASE WHEN NULLIF(TRIM(s.type), '') IS NULL THEN 1 ELSE 0 END
+        ) / COUNT(*) AS type_null_ratio,
+      1.0 * SUM(
+            CASE WHEN s.word_count IS NULL THEN 1 ELSE 0 END
+        ) / COUNT(*) AS word_count_null_ratio,
+      1.0 * SUM(
+            CASE WHEN s.char_count IS NULL THEN 1 ELSE 0 END
+        ) / COUNT(*) AS char_count_null_ratio,
+      1.0 * SUM(
+            CASE WHEN s.thai_ratio IS NULL THEN 1 ELSE 0 END
+        ) / COUNT(*) AS thai_null_ratio,
+      1.0 * SUM(
+            CASE WHEN NULLIF(TRIM(s.source), '') IS NULL THEN 1 ELSE 0 END
+        ) / COUNT(*) AS source_null_ratio
+    FROM documents s
+    JOIN datasets d
+      ON d.id = s.dataset_id
+    GROUP BY s.dataset_id, d.name;
+  metrics:
+    - dataset_id:
+        usage: "LABEL"
+    - name:
+        usage: "LABEL"
+    - language_null_ratio:
+        usage: "GAUGE"
+        description: "Ratio of docs with NULL/blank language per dataset"
+    - content_null_ratio:
+        usage: "GAUGE"
+        description: "Ratio of docs with NULL/blank content per dataset"
+    - type_null_ratio:
+        usage: "GAUGE"
+        description: "Ratio of docs with NULL/blank type per dataset"
+    - word_count_null_ratio:
+        usage: "GAUGE"
+        description: "Ratio of docs with NULL word_count per dataset"
+    - char_count_null_ratio:
+        usage: "GAUGE"
+        description: "Ratio of docs with NULL char_count per dataset"
+    - thai_null_ratio:
+        usage: "GAUGE"
+        description: "Ratio of docs with NULL thai_ratio per dataset"
+    - source_null_ratio:
+        usage: "GAUGE"
+        description: "Ratio of docs with NULL/blank source per dataset"

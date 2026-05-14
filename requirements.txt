@@ -1,0 +1,10 @@
+minio
+beautifulsoup4
+lxml
+pythainlp
+python-dotenv
+langdetect
+psycopg
+psycopg[binary]
+transformers
+torch

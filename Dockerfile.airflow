@@ -1,0 +1,7 @@
+# Dockerfile.airflow
+FROM apache/airflow:3.1.0
+USER airflow
+COPY requirements.txt /requirements.txt
+RUN pip install --no-cache-dir -r /requirements.txt
+RUN pip install --index-url https://download.pytorch.org/whl/cu121 torch torchvision
+RUN pip install "airflow-exporter==1.6.0"

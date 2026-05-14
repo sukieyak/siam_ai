@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.env
+grafana-data/
+logs/
+minio_data/
+.vscode/
+env/
